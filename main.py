@@ -30,6 +30,64 @@ def loot_table_json_to_java(path: str, event: int):
 
     def build_pool(pool):
 
+        # Get amount value for EnchantmentLevelLootNumberProvider
+        def enchantment_level_value(amount_object):
+
+            # Just a number
+            if isinstance(amount_object, int):
+
+                return "new EnchantmentLevelBasedValue.Constant(" + str(amount_object) + "F)"
+
+            # Has type
+            elif 'type' in amount_object:
+
+                amount_type = amount_object['type']
+
+                # Constant+
+                if amount_type == "minecraft:constant":
+
+                    return "new EnchantmentLevelBasedValue.Constant(" + amount_object['value'] + "F)"
+
+                # Clamped
+                elif amount_type == "minecraft:clamped":
+
+                    return "new EnchantmentLevelBasedValue.Clamped(" + \
+                           enchantment_level_value(amount_object['value']) + ", " + str(amount_object['min']) + \
+                           "F, " + str(amount_object['max']) + "F)"
+
+                # Fraction
+                elif amount_type == "minecraft:fraction":
+
+                    return "new EnchantmentLevelBasedValue.Fraction(" + \
+                           enchantment_level_value(amount_object['numerator']) + ", " + \
+                           enchantment_level_value(amount_object['denominator']) + ")"
+
+                # Levels squared
+                elif amount_type == "minecraft:levels_squared":
+
+                    return "new EnchantmentLevelBasedValue.LevelsSquared(" + str(amount_object['added']) + "F)"
+
+                # Linear
+                elif amount_type == "minecraft:linear":
+
+                    return "new EnchantmentLevelBasedValue.Linear(" + str(amount_object['base']) + "F, " + \
+                           str(amount_object['per_level_above_first']) + "F)"
+
+                # Lookup
+                elif amount_type == "minecraft:lookup":
+
+                    result = "new EnchantmentLevelBasedValue.Lookup(Arrays.asList("
+
+                    for value in amount_object['values']:
+
+                        result += str(value) + "F, "
+
+                    result = result[:-2]
+
+                    result += "), " + enchantment_level_value(amount_object['fallback']) + ")"
+
+                    return result
+
         # Get matching LootNumberProvider
         def loot_number(number_object):
 
@@ -92,26 +150,52 @@ def loot_table_json_to_java(path: str, event: int):
 
                     return result
 
-                # Storage
-                elif roll_type == "minecraft:binomial":
+                # Storage - needs try catch, maybe next time
 
-                    return "new BinomialLootNumberProvider(" + loot_number(number_object['n']) + ", " + \
-                           loot_number(number_object['p']) + ")"
+                # Enchantment level
+                elif roll_type == "minecraft:enchantment_level":
 
-        # Start building
+                    return "new EnchantmentLevelLootNumberProvider(" + \
+                           enchantment_level_value(number_object['amount']) + ")"
+
+            # Uniform type without 'type' field
+            elif 'min' in number_object and 'max' in number_object:
+
+                return "new UniformLootNumberProvider(" + loot_number(number_object['min']) + ", " + \
+                       loot_number(number_object['max']) + ")"
+
+        # Get matching LootCondition
+        def loot_condition(condition_object):
+
+            print()
+
+        # Get matching LootFunction
+        def loot_function(function_object):
+
+            print()
+
+        # --- Start building ---
         print("\tLootPool.Builder lootPool = LootPool.builder()")
 
+        # Rolls
         if 'rolls' in pool:
 
             rolls = pool['rolls']
 
             print("\t\t.rolls(" + loot_number(rolls) + ")")
 
-        # End building for MODIFY event
+        # Bonus rolls
+        if 'bonus_rolls' in pool:
+
+            rolls = pool['bonus_rolls']
+
+            print("\t\t.bonusRolls(" + loot_number(rolls) + ")")
+
+        # --- End building for MODIFY event ---
         if event == 0:
             print("\ttableBuilder.pool(lootPool);\n")
 
-        # End building for REPLACE event
+        # --- End building for REPLACE event ---
         elif event == 1:
             print("\treturn mergePools(original, lootPool.build());\n")
 

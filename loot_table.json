@@ -2,13 +2,13 @@
   "pools": [
     {
       "rolls": {
-        "type": "minecraft:uniform",
-        "max": {
-          "type": "minecraft:binomial",
-          "n": 3,
-          "p": 2
-        },
-        "min": 7
+        "min": 0,
+        "max": 0
+      },
+      "bonus_rolls": {
+        "type": "minecraft:score",
+        "target": "this",
+        "score": "hh"
       },
       "entries": [
         {

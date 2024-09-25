@@ -1,0 +1,8 @@
+- item / item tag / empty / alternatives / loot table / sequence / dynamic / group entry
+- functions (there are a lot)
+- conditions ~19
+
+Won't do (or do but later):
+
+- storage number type
+- loot table object entry
