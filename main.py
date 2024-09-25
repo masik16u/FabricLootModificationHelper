@@ -1,4 +1,5 @@
 import json
+from numbers import Number
 from enum import IntEnum
 
 
@@ -17,7 +18,7 @@ def loot_table_json_to_java(path: str, event: int):
     (use REPLACE to modify loot tables like fishing or archaeology, that have only one pool)
     e.g. You modify 'blocks/stone' loot table, stone will drop ONLY vanilla item OR your item
 
-    P.S. to use REPLACE event you need to widen access for LootTable.pools field using accesswidener:
+    IMPORTANT! to use REPLACE event you need to widen access for LootTable.pools field using accesswidener:
     'accessible field net/minecraft/loot/LootTable pools Ljava/util/List;'
     and you need to create a 'mergePools' method:
     'private static LootTable mergePools(LootTable original, LootPool lootPool) {
@@ -32,9 +33,12 @@ def loot_table_json_to_java(path: str, event: int):
 
         # Get amount value for EnchantmentLevelLootNumberProvider
         def enchantment_level_value(amount_object):
+            """
+            Helper method, converts object to EnchantmentLevelLootNumberProvider
+            """
 
             # Just a number
-            if isinstance(amount_object, int):
+            if isinstance(amount_object, Number):
 
                 return "new EnchantmentLevelBasedValue.Constant(" + str(amount_object) + "F)"
 
@@ -90,9 +94,12 @@ def loot_table_json_to_java(path: str, event: int):
 
         # Get matching LootNumberProvider
         def loot_number(number_object):
+            """
+            Helper method, converts object to LootNumberProvider
+            """
 
             # If it is just a number
-            if isinstance(number_object, int):
+            if isinstance(number_object, Number):
 
                 return "ConstantLootNumberProvider.create(" + str(number_object) + "F)"
 
@@ -164,10 +171,164 @@ def loot_table_json_to_java(path: str, event: int):
                 return "new UniformLootNumberProvider(" + loot_number(number_object['min']) + ", " + \
                        loot_number(number_object['max']) + ")"
 
+        # Get BoundedIntUnaryOperator
+        def bounded_int_unary_operator(value_object):
+            """
+            Helper method, converts object to BoundedIntUnaryOperator
+
+            IMPORTANT!
+            if you DON'T use exact number or constant for both min and max values for the value you need to add this to your accesswidener:
+            'accessible method net/minecraft/loot/operator/BoundedIntUnaryOperator <init> (Lnet/minecraft/loot/provider/number/LootNumberProvider;Lnet/minecraft/loot/provider/number/LootNumberProvider;)V'
+            """
+
+            min_value = value_object.get('min')
+            max_value = value_object.get('max')
+
+            if isinstance(value_object, int):
+
+                return "BoundedIntUnaryOperator.create(" + str(value_object) + ")"
+
+            elif isinstance(min_value, int) and isinstance(max_value, int):
+
+                return "BoundedIntUnaryOperator.create(" + str(min_value) + ", " + str(max_value) + ")"
+
+            else:
+
+                result = "new BoundedIntUnaryOperator("
+
+                if 'min' in value_object:
+
+                    result += loot_number(value_object['min'])
+
+                else:
+
+                    result += "null"
+
+                result += ", "
+
+                if 'max' in value_object:
+
+                    result += loot_number(value_object['max'])
+
+                else:
+
+                    result += "null"
+
+                result += ")"
+
+                return result
+
         # Get matching LootCondition
         def loot_condition(condition_object):
 
-            print()
+            condition_type = condition_object['condition']
+
+            # Weather check
+            if condition_type == "minecraft:weather_check":
+
+                result = ".conditionally(WeatherCheckLootCondition.create()"
+
+                if 'thundering' in condition_object:
+
+                    result += ".thundering(" + ("true" if condition_object['thundering'] else "false") + ")"
+
+                if 'raining' in condition_object:
+
+                    result += ".raining(" + ("true" if condition_object['raining'] else "false") + ")"
+
+                result += ")"
+
+                return result
+
+            # Value check
+            if condition_type == "minecraft:value_check":
+
+                return ".conditionally(ValueCheckLootCondition.builder(" + loot_number(condition_object['value']) + \
+                    ", " + bounded_int_unary_operator(condition_object['range']) + "))"
+
+            # Time check
+            if condition_type == "minecraft:time_check":
+
+                result = ".conditionally(TimeCheckLootCondition.create(" + \
+                         bounded_int_unary_operator(condition_object['value']) + ")"
+
+                if 'period' in condition_object:
+
+                    result += ".period(" + str(condition_object['period']) + ")"
+
+                result += ")"
+
+                return result
+
+            # Table bonus
+            if condition_type == "minecraft:table_bonus":
+
+                result = ".conditionally(TableBonusLootCondition.builder(registries.getWrapperOrThrow(" \
+                         "RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(RegistryKeys.ENCHANTMENT, " \
+                         "Identifier.of(\"" + condition_object['enchantment'] + "\")))"
+
+                for chance in condition_object['chances']:
+
+                    result += ", " + str(chance)
+
+                result += "))"
+
+                return result
+
+            # Survives explosion
+            if condition_type == "minecraft:survives_explosion":
+
+                return ".conditionally(SurvivesExplosionLootCondition.builder())"
+
+            # Reference
+            if condition_type == "minecraft:reference":
+
+                return ".conditionally(ReferenceLootCondition.builder(RegistryKey.of(RegistryKeys.PREDICATE, " \
+                       "Identifier.of(\"" + condition_object['name'] + "\"))))"
+
+            # Random chance with enchanted bonus
+            if condition_type == "minecraft:random_chance_with_enchanted_bonus":
+
+                return ".conditionally(new RandomChanceWithEnchantedBonusLootCondition(" + \
+                       str(condition_object['unenchanted_chance']) + "F, " + \
+                       str(enchantment_level_value(condition_object['enchanted_chance'])) + ", " \
+                       "registries.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(" \
+                       "RegistryKeys.ENCHANTMENT, Identifier.of(\"" + condition_object['enchantment'] + "\")))))"
+
+            # Random chance
+            if condition_type == "minecraft:random_chance":
+
+                return ".conditionally(RandomChanceLootCondition.builder(" + \
+                       loot_number(condition_object['chance']) + "))"
+
+            # Match tool
+            if condition_type == "minecraft:match_tool":
+
+                result = ".conditionally(MatchToolLootCondition.builder(ItemPredicate.Builder.create()"
+
+                if 'items' in condition_object['predicate']:
+
+                    result += ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
+                              condition_object['predicate']['items'][1:] + "\")))"
+
+                if 'count' in condition_object['predicate']:
+
+                    if isinstance(condition_object['predicate']['count'], int):
+
+                        result += ".count(NumberRange.IntRange.exactly(" + \
+                                  str(condition_object['predicate']['count']) + "))"
+
+                    else:
+
+                        result += ".count(NumberRange.IntRange.between(" + \
+                                  str(condition_object['predicate']['count']['min']) + ", " + \
+                                  str(condition_object['predicate']['count']['max']) + "))"
+
+                # No components and predicates support
+
+                result += "))"
+
+                return result
 
         # Get matching LootFunction
         def loot_function(function_object):
@@ -190,6 +351,19 @@ def loot_table_json_to_java(path: str, event: int):
             rolls = pool['bonus_rolls']
 
             print("\t\t.bonusRolls(" + loot_number(rolls) + ")")
+
+        # Entries
+
+        # POOL Conditions
+        if 'conditions' in pool:
+
+            conditions = pool['conditions']
+
+            for condition in conditions:
+
+                print("\t\t" + loot_condition(condition))
+
+        # POOL Functions
 
         # --- End building for MODIFY event ---
         if event == 0:
