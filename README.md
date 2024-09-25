@@ -1,6 +1,6 @@
 The goal of this project is to help Fabric modders convert loot tables from JSON format to Java code:
 
-Go from this:
+## Go from this:
 
     {
       "pools": [
@@ -22,7 +22,7 @@ Go from this:
       ]
     }
 
-To this:
+## To this:
 
     if (key == RegistryKey.of(RegistryKeys.LOOT_TABLE, Identifier.of("chests/igloo_chest"))) {
     
@@ -33,3 +33,12 @@ To this:
         tableBuilder.pool(lootPool);
     
     }
+
+## My current milestone:
+
+### Complete basics and make program usable
+
+- [x] Add support to most of the LootNumberProviders
+- [ ] Add support to most of the LootConditions
+- [ ] Add support to most of the LootFunctions
+- [ ] Add support to most of the LootPoolEntries
