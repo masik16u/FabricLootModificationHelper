@@ -71,6 +71,37 @@
             "items": "#minecraft:acacia_logs",
             "count": 0
           }
+        },
+        {
+          "condition": "minecraft:location_check",
+          "offsetX": 4,
+          "offsetY": 6,
+          "offsetZ": 3,
+          "predicate": {
+            "position": {
+              "x": {
+                "min": 0.4,
+                "max": 0
+              }
+            },
+            "biomes": "minecraft:forest",
+            "structures": "minecraft:kk",
+            "dimension": "minecraft:overworld",
+            "light": {
+              "light": 3
+            },
+            "smokey": true,
+            "can_see_sky": false
+          }
+        },
+        {
+          "condition": "minecraft:inverted",
+          "term": {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "dimension": "minecraft:overworld"
+            }
+          }
         }
       ]
     }

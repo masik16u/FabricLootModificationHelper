@@ -226,7 +226,7 @@ def loot_table_json_to_java(path: str, event: int):
             # Weather check
             if condition_type == "minecraft:weather_check":
 
-                result = ".conditionally(WeatherCheckLootCondition.create()"
+                result = "WeatherCheckLootCondition.create()"
 
                 if 'thundering' in condition_object:
 
@@ -236,36 +236,32 @@ def loot_table_json_to_java(path: str, event: int):
 
                     result += ".raining(" + ("true" if condition_object['raining'] else "false") + ")"
 
-                result += ")"
-
                 return result
 
             # Value check
             if condition_type == "minecraft:value_check":
 
-                return ".conditionally(ValueCheckLootCondition.builder(" + loot_number(condition_object['value']) + \
-                    ", " + bounded_int_unary_operator(condition_object['range']) + "))"
+                return "ValueCheckLootCondition.builder(" + loot_number(condition_object['value']) + \
+                    ", " + bounded_int_unary_operator(condition_object['range']) + ")"
 
             # Time check
             if condition_type == "minecraft:time_check":
 
-                result = ".conditionally(TimeCheckLootCondition.create(" + \
+                result = "TimeCheckLootCondition.create(" + \
                          bounded_int_unary_operator(condition_object['value']) + ")"
 
                 if 'period' in condition_object:
 
                     result += ".period(" + str(condition_object['period']) + ")"
 
-                result += ")"
-
                 return result
 
             # Table bonus
             if condition_type == "minecraft:table_bonus":
 
-                result = ".conditionally(TableBonusLootCondition.builder(registries.getWrapperOrThrow(" \
+                result = "TableBonusLootCondition.builder(registries.getWrapperOrThrow(" \
                          "RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(RegistryKeys.ENCHANTMENT, " \
-                         "Identifier.of(\"" + condition_object['enchantment'] + "\")))"
+                         "Identifier.of(\"" + condition_object['enchantment'] + "\"))"
 
                 for chance in condition_object['chances']:
 
@@ -278,57 +274,263 @@ def loot_table_json_to_java(path: str, event: int):
             # Survives explosion
             if condition_type == "minecraft:survives_explosion":
 
-                return ".conditionally(SurvivesExplosionLootCondition.builder())"
+                return "SurvivesExplosionLootCondition.builder()"
 
             # Reference
             if condition_type == "minecraft:reference":
 
-                return ".conditionally(ReferenceLootCondition.builder(RegistryKey.of(RegistryKeys.PREDICATE, " \
-                       "Identifier.of(\"" + condition_object['name'] + "\"))))"
+                return "ReferenceLootCondition.builder(RegistryKey.of(RegistryKeys.PREDICATE, " \
+                       "Identifier.of(\"" + condition_object['name'] + "\")))"
 
             # Random chance with enchanted bonus
             if condition_type == "minecraft:random_chance_with_enchanted_bonus":
 
-                return ".conditionally(new RandomChanceWithEnchantedBonusLootCondition(" + \
+                return "new RandomChanceWithEnchantedBonusLootCondition(" + \
                        str(condition_object['unenchanted_chance']) + "F, " + \
                        str(enchantment_level_value(condition_object['enchanted_chance'])) + ", " \
                        "registries.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(" \
-                       "RegistryKeys.ENCHANTMENT, Identifier.of(\"" + condition_object['enchantment'] + "\")))))"
+                       "RegistryKeys.ENCHANTMENT, Identifier.of(\"" + condition_object['enchantment'] + "\"))))"
 
             # Random chance
             if condition_type == "minecraft:random_chance":
 
-                return ".conditionally(RandomChanceLootCondition.builder(" + \
-                       loot_number(condition_object['chance']) + "))"
+                return "RandomChanceLootCondition.builder(" + \
+                       loot_number(condition_object['chance']) + ")"
 
             # Match tool
             if condition_type == "minecraft:match_tool":
 
-                result = ".conditionally(MatchToolLootCondition.builder(ItemPredicate.Builder.create()"
+                result = "MatchToolLootCondition.builder(ItemPredicate.Builder.create()"
 
-                if 'items' in condition_object['predicate']:
+                predicate = condition_object['predicate']
+
+                if 'items' in predicate:
 
                     result += ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
-                              condition_object['predicate']['items'][1:] + "\")))"
+                              str(predicate['items']).replace('#', '') + "\")))"
 
-                if 'count' in condition_object['predicate']:
+                if 'count' in predicate:
 
-                    if isinstance(condition_object['predicate']['count'], int):
+                    if isinstance(predicate['count'], int):
 
                         result += ".count(NumberRange.IntRange.exactly(" + \
-                                  str(condition_object['predicate']['count']) + "))"
+                                  str(predicate['count']) + "))"
 
                     else:
 
                         result += ".count(NumberRange.IntRange.between(" + \
-                                  str(condition_object['predicate']['count']['min']) + ", " + \
-                                  str(condition_object['predicate']['count']['max']) + "))"
+                                  str(predicate['count']['min']) + ", " + \
+                                  str(predicate['count']['max']) + "))"
 
                 # No components and predicates support
 
-                result += "))"
+                result += ")"
 
                 return result
+
+            # Location check
+            if condition_type == "minecraft:location_check":
+
+                result = "LocationCheckLootCondition.builder(LocationPredicate.Builder.create()"
+
+                predicate = condition_object['predicate']
+
+                # Position predicate
+                if 'position' in predicate:
+
+                    if 'x' in predicate['position']:
+
+                        x = predicate['position']['x']
+
+                        if isinstance(x, Number):
+
+                            result += ".x(NumberRange.DoubleRange.exactly(" + \
+                                      str(x) + "F))"
+
+                        else:
+
+                            result += ".x(NumberRange.DoubleRange.between(" + \
+                                      str(x['min']) + "F, " + \
+                                      str(x['max']) + "F))"
+
+                    if 'y' in predicate['position']:
+
+                        y = predicate['position']['y']
+
+                        if isinstance(y, Number):
+
+                            result += ".y(NumberRange.DoubleRange.exactly(" + \
+                                      str(y) + "F))"
+
+                        else:
+
+                            result += ".y(NumberRange.DoubleRange.between(" + \
+                                      str(y['min']) + "F, " + \
+                                      str(y['max']) + "F))"
+
+                    if 'z' in predicate['position']:
+
+                        z = predicate['position']['z']
+
+                        if isinstance(z, Number):
+
+                            result += ".z(NumberRange.DoubleRange.exactly(" + \
+                                      str(z) + "F))"
+
+                        else:
+
+                            result += ".z(NumberRange.DoubleRange.between(" + \
+                                      str(z['min']) + "F, " + \
+                                      str(z['max']) + "F))"
+
+                # Biomes predicate
+                if 'biomes' in predicate:
+
+                    # No biome tags support
+
+                    result += ".biome(RegistryEntryList.of(registries.getWrapperOrThrow(" \
+                              "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(RegistryKeys.BIOME, Identifier.of(\"" + \
+                              predicate['biomes'] + "\")))))"
+
+                # Structure predicate
+                if 'structures' in predicate:
+
+                    result += ".structure(RegistryEntryList.of(registries.getWrapperOrThrow(" \
+                              "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(RegistryKeys.STRUCTURE, " \
+                              "Identifier.of(\"" + predicate['structures'] + "\")))))"
+
+                # Dimension predicate
+                if 'dimension' in predicate:
+
+                    result += ".dimension(RegistryKey.of(RegistryKeys.WORLD, Identifier.of(\"" + \
+                              predicate['dimension'] + "\")))"
+
+                # Light predicate
+                if 'light' in predicate:
+
+                    if 'light' in predicate['light']:
+
+                        result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.exactly(" + \
+                                  str(predicate['light']['light']) + ")))"
+
+                    else:
+
+                        result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.between(" + \
+                                  str(predicate['light']['min']) + ", " + \
+                                  str(predicate['light']['max']) + ")))"
+
+                # Smokey predicate
+                if 'smokey' in predicate:
+
+                    result += ".smokey(" + ("true" if predicate['smokey'] else "false") + ")"
+
+                # Can see sky predicate
+                if 'can_see_sky' in predicate:
+
+                    result += ".canSeeSky(" + ("true" if predicate['can_see_sky'] else "false") + ")"
+
+                # Block predicate
+                if 'block' in predicate:
+
+                    result += ".block(BlockPredicate.Builder.create()"
+
+                    if 'blocks' in predicate['block']:
+
+                        blocks = predicate['block']['blocks']
+
+                        if '#' not in str(blocks):
+
+                            result += ".blocks(Registries.BLOCK.get(Identifier.of(\"" + blocks + "\"))))"
+
+                        else:
+
+                            result += ".tag(TagKey.of(RegistryKeys.BLOCK, Identifier.of(\"" + \
+                                      str(blocks).replace('#', '') + "\"))))"
+
+                    # No state support
+
+                # Fluid predicate
+                if 'fluid' in predicate:
+
+                    result += ".fluid(FluidPredicate.Builder.create()"
+
+                    if 'fluids' in predicate['fluid']:
+
+                        fluids = predicate['fluid']['fluids']
+
+                        result += ".fluid(Registries.FLUID.get(Identifier.of(\"" + fluids + "\"))))"
+
+                        # No fluid tag support
+
+                    # No state support
+
+                # Block offset
+                if 'offsetX' in condition_object or 'offsetY' in condition_object or 'offsetZ' in condition_object:
+
+                    result += ", new BlockPos("
+
+                    if 'offsetX' in condition_object:
+
+                        result += str(condition_object['offsetX']) + ", "
+
+                    else:
+
+                        result += "0, "
+
+                    if 'offsetY' in condition_object:
+
+                        result += str(condition_object['offsetY']) + ", "
+
+                    else:
+
+                        result += "0, "
+
+                    if 'offsetZ' in condition_object:
+
+                        result += str(condition_object['offsetZ']) + ")"
+
+                    else:
+
+                        result += "0)"
+
+                result += ")"
+
+                return result
+
+            # Killed by player
+            if condition_type == "minecraft:killed_by_player":
+
+                result = "KilledByPlayerLootCondition.builder()"
+
+                if 'inverse' in condition_object:
+
+                    if condition_object['inverse']:
+
+                        result += ".invert()"
+
+                return result
+
+            # Inverted
+            if condition_type == "minecraft:inverted":
+
+                return "InvertedLootCondition.builder(" + loot_condition(condition_object['term']) + ")"
+
+            # Entity scores
+            # if condition_type == "minecraft:entity_scores":
+            #
+            #     result = "EntityScoresLootCondition.create(LootContext.EntityTarget." + \
+            #              str(condition_object['entity']).upper() + ")"
+            #
+            #     for score in condition_object['scores'].items():
+            #
+            #         result += ".score(\"" + score[0] + "\", " + str(isinstance(score, tuple)) + ")"
+            #
+            #     return result
+
+            # Entity properties
+            if condition_type == "minecraft:entity_properties":
+
+                return ""
 
         # Get matching LootFunction
         def loot_function(function_object):
@@ -361,7 +563,7 @@ def loot_table_json_to_java(path: str, event: int):
 
             for condition in conditions:
 
-                print("\t\t" + loot_condition(condition))
+                print("\t\t.conditionally(" + loot_condition(condition) + ")")
 
         # POOL Functions
 
