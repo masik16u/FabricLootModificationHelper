@@ -102,6 +102,39 @@
               "dimension": "minecraft:overworld"
             }
           }
+        },
+        {
+          "condition": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "flags": {
+              "is_on_ground": false,
+              "is_on_fire": true,
+              "is_sneaking": false,
+              "is_sprinting": true,
+              "is_swimming": true,
+              "is_flying": false,
+              "is_baby": false
+            },
+            "equipment": {
+              "offhand": {
+                "items": "minecraft:armor_stand"
+              },
+              "chest": {}
+            },
+            "effects": {
+              "minecraft:absorption": {
+                "amplifier": 6,
+                "ambient": true
+              },
+              "minecraft:blindness": {
+                "duration": {
+                  "min": 7,
+                  "max": 0
+                }
+              }
+            }
+          }
         }
       ]
     }

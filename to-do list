@@ -2,15 +2,19 @@
 - functions (there are a lot)
 - conditions ~19
 
+- biome and structure in location MULTIPLE
+
 Won't do (or do but later):
 
 - storage number type
 
-- match tool condition's components and predicates
+- item predicate's components and predicates (sub sub sub sub predicate, awesome)
 - biome tags as biome predicate in location check condition
 - block state in block predicate in location check condition (not sure if that will be possible to generate, but can be done like this: '.state(StatePredicate.Builder.create().exactMatch(Properties.POWERED, true))')
 - fluid state in fluid predicate in location check condition (same as block state)
-- fluid tags as fluid predicate in location check condition
 - entity scores condition (idk python makes some stupid stuff with that JSON structure of scores)
+- type specific predicate in entity properties condition
+- nbt predicate in entity properties condition
+- slots predicate in entity properties condition (also funky like entity scores condition)
 
 - loot table object entry

@@ -218,8 +218,417 @@ def loot_table_json_to_java(path: str, event: int):
 
                 return result
 
+        # Get DoubleRange
+        def double_range(value_object):
+            """
+            Helper method, converts object to DoubleRange exactly or between
+            """
+
+            if isinstance(value_object, Number):
+
+                return "NumberRange.DoubleRange.exactly(" + str(value_object) + "F)"
+
+            else:
+
+                return "NumberRange.DoubleRange.between(" + \
+                       str(value_object['min']) + "F, " + str(value_object['max']) + "F)"
+
+        # Get DoubleRange if value exists ANY if doesn't
+        def double_range_or_any(obj, value_name):
+            """
+            Helper method, returns DoubleRange if value exists, otherwise returns DoubleRange.ANY
+            """
+
+            if value_name in obj:
+
+                return double_range(obj[value_name])
+
+            else:
+
+                return "NumberRange.DoubleRange.ANY"
+
+        # Get IntRange
+        def int_range(value_object):
+            """
+            Helper method, converts object to IntRange exactly or between
+            """
+
+            if isinstance(value_object, int):
+
+                return "NumberRange.IntRange.exactly(" + str(value_object) + ")"
+
+            else:
+
+                return "NumberRange.IntRange.between(" + \
+                       str(value_object['min']) + ", " + str(value_object['max']) + ")"
+
+        # Get IntRange if value exists ANY if doesn't
+        def int_range_or_any(obj, value_name):
+            """
+            Helper method, returns IntRange if value exists, otherwise returns DoubleRange.ANY
+            """
+
+            if value_name in obj:
+
+                return int_range(obj[value_name])
+
+            else:
+
+                return "NumberRange.IntRange.ANY"
+
+        # Get location predicate
+        def location_predicate(predicate_object):
+            """
+            Helper method, converts object to LocationPredicate
+            """
+
+            result = "LocationPredicate.Builder.create()"
+
+            # Position predicate
+            if 'position' in predicate_object:
+
+                if 'x' in predicate_object['position']:
+
+                    result += ".x(" + double_range(predicate_object['position']['x']) + ")"
+
+                if 'y' in predicate_object['position']:
+
+                    result += ".y(" + double_range(predicate_object['position']['y']) + ")"
+
+                if 'z' in predicate_object['position']:
+
+                    result += ".z(" + double_range(predicate_object['position']['z']) + ")"
+
+            # Biomes predicate
+            if 'biomes' in predicate_object:
+                # No biome tags support
+
+                result += ".biome(RegistryEntryList.of(registries.getWrapperOrThrow(" \
+                          "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(RegistryKeys.BIOME, Identifier.of(\"" + \
+                          predicate_object['biomes'] + "\")))))"
+
+            # Structure predicate
+            if 'structures' in predicate_object:
+
+                result += ".structure(RegistryEntryList.of(registries.getWrapperOrThrow(" \
+                          "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(RegistryKeys.STRUCTURE, " \
+                          "Identifier.of(\"" + predicate_object['structures'] + "\")))))"
+
+            # Dimension predicate
+            if 'dimension' in predicate_object:
+
+                result += ".dimension(RegistryKey.of(RegistryKeys.WORLD, Identifier.of(\"" + \
+                          predicate_object['dimension'] + "\")))"
+
+            # Light predicate
+            if 'light' in predicate_object:
+
+                if 'light' in predicate_object['light']:
+
+                    result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.exactly(" + \
+                              str(predicate_object['light']['light']) + ")))"
+
+                else:
+
+                    result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.between(" + \
+                              str(predicate_object['light']['min']) + ", " + \
+                              str(predicate_object['light']['max']) + ")))"
+
+            # Smokey predicate
+            if 'smokey' in predicate_object:
+                result += ".smokey(" + ("true" if predicate_object['smokey'] else "false") + ")"
+
+            # Can see sky predicate
+            if 'can_see_sky' in predicate_object:
+                result += ".canSeeSky(" + ("true" if predicate_object['can_see_sky'] else "false") + ")"
+
+            # Block predicate
+            if 'block' in predicate_object:
+
+                result += ".block(BlockPredicate.Builder.create()"
+
+                if 'blocks' in predicate_object['block']:
+
+                    blocks = predicate_object['block']['blocks']
+
+                    if '#' not in str(blocks):
+
+                        result += ".blocks(Registries.BLOCK.get(Identifier.of(\"" + blocks + "\"))))"
+
+                    else:
+
+                        result += ".tag(TagKey.of(RegistryKeys.BLOCK, Identifier.of(\"" + \
+                                  str(blocks).replace('#', '') + "\"))))"
+
+                # No state support
+
+            # Fluid predicate
+            if 'fluid' in predicate_object:
+
+                result += ".fluid(FluidPredicate.Builder.create()"
+
+                if 'fluids' in predicate_object['fluid']:
+
+                    fluids = predicate_object['fluid']['fluids']
+
+                    if '#' not in str(fluids):
+
+                        result += ".fluid(Registries.FLUID.get(Identifier.of(\"" + fluids + "\"))))"
+
+                    else:
+
+                        result += ".tag(Registries.FLUID.getOrCreateEntryList(TagKey.of(RegistryKeys.FLUID, " \
+                                  "Identifier.of(\"" + str(fluids).replace('#', '') + "\")))) "
+
+                # No state support
+
+            return result
+
+        # Get entity predicate
+        def entity_predicate(predicate_object):
+            """
+            Helper method, converts object to EntityPredicate
+            """
+
+            result = "EntityPredicate.Builder.create()"
+
+            # Entity type predicate
+            if 'type' in predicate_object:
+
+                if '#' not in str(predicate_object['type']):
+
+                    result += ".type(EntityTypePredicate.create(Registries.ENTITY_TYPE.get(Identifier.of(\"" + \
+                              predicate_object['type'] + "\"))))"
+
+                else:
+
+                    result += ".type(EntityTypePredicate.create(TagKey.of(RegistryKeys.ENTITY_TYPE, " \
+                              "Identifier.of(\"" + str(predicate_object['type']).replace('#', '') + "\")))) "
+
+            # No support for type specific
+
+            # No support for nbt
+
+            # Team predicate
+            if 'team' in predicate_object:
+
+                result += ".team(\"" + predicate_object['team'] + "\")"
+
+            # Location predicate
+            if 'location' in predicate_object:
+
+                result += ".location(" + location_predicate(predicate_object['location']) + ")"
+
+            # Movement predicate
+            if 'movement' in predicate_object:
+
+                movement = predicate_object['movement']
+
+                result += ".movement(new MovementPredicate("
+
+                result += double_range_or_any(movement, 'x') + ", " + \
+                          double_range_or_any(movement, 'y') + ", " + \
+                          double_range_or_any(movement, 'z') + ", " + \
+                          double_range_or_any(movement, 'speed') + ", " + \
+                          double_range_or_any(movement, 'horizontal_speed') + ", " + \
+                          double_range_or_any(movement, 'vertical_speed') + ", " + \
+                          double_range_or_any(movement, 'fall_speed') + "))"
+
+            # Movement affected by predicate
+            if 'movement_affected_by' in predicate_object:
+
+                result += ".movementAffectedBy(" + location_predicate(predicate_object['movement_affected_by']) + ")"
+
+            # Stepping on predicate
+            if 'stepping_on' in predicate_object:
+
+                result += ".steppingOn(" + location_predicate(predicate_object['stepping_on']) + ")"
+
+            # Distance predicate
+            if 'distance' in predicate_object:
+                distance = predicate_object['distance']
+
+                result += ".distance(new DistancePredicate("
+
+                result += double_range_or_any(distance, 'x') + ", " + \
+                          double_range_or_any(distance, 'y') + ", " + \
+                          double_range_or_any(distance, 'z') + ", " + \
+                          double_range_or_any(distance, 'horizontal') + ", " + \
+                          double_range_or_any(distance, 'absolute') + "))"
+
+            # Flags predicate
+            if 'flags' in predicate_object:
+
+                result += ".flags(EntityFlagsPredicate.Builder.create()"
+
+                flags = predicate_object['flags']
+
+                if 'is_on_ground' in flags:
+
+                    result += ".onGround(" + ("true" if flags['is_on_ground'] else "false") + ")"
+
+                if 'is_on_fire' in flags:
+
+                    result += ".onFire(" + ("true" if flags['is_on_fire'] else "false") + ")"
+
+                if 'is_sneaking' in flags:
+
+                    result += ".sneaking(" + ("true" if flags['is_sneaking'] else "false") + ")"
+
+                if 'is_sprinting' in flags:
+
+                    result += ".sprinting(" + ("true" if flags['is_sprinting'] else "false") + ")"
+
+                if 'is_swimming' in flags:
+
+                    result += ".swimming(" + ("true" if flags['is_swimming'] else "false") + ")"
+
+                if 'is_flying' in flags:
+
+                    result += ".flying(" + ("true" if flags['is_flying'] else "false") + ")"
+
+                if 'is_baby' in flags:
+
+                    result += ".isBaby(" + ("true" if flags['is_baby'] else "false") + ")"
+
+                result += ")"
+
+            # Equipment predicate
+            if 'equipment' in predicate_object:
+
+                result += ".equipment(EntityEquipmentPredicate.Builder.create()"
+
+                equipment = predicate_object['equipment']
+
+                if 'mainhand' in equipment:
+
+                    result += ".mainhand(" + item_predicate(equipment['mainhand']) + ")"
+
+                if 'offhand' in equipment:
+
+                    result += ".offhand(" + item_predicate(equipment['offhand']) + ")"
+
+                if 'head' in equipment:
+
+                    result += ".head(" + item_predicate(equipment['head']) + ")"
+
+                if 'chest' in equipment:
+
+                    result += ".chest(" + item_predicate(equipment['chest']) + ")"
+
+                if 'legs' in equipment:
+
+                    result += ".legs(" + item_predicate(equipment['legs']) + ")"
+
+                if 'feet' in equipment:
+
+                    result += ".feet(" + item_predicate(equipment['feet']) + ")"
+
+                if 'body' in equipment:
+
+                    result += ".body(" + item_predicate(equipment['body']) + ")"
+
+                result += ")"
+
+            # Periodic tick predicate
+            if 'periodic_tick' in predicate_object:
+
+                result += ".periodicTick(" + str(predicate_object['periodic_tick']) + ")"
+
+            # Vehicle predicate
+            if 'vehicle' in predicate_object:
+
+                result += ".vehicle(" + entity_predicate(predicate_object['vehicle']) + ")"
+
+            # Passenger predicate
+            if 'passenger' in predicate_object:
+
+                result += ".passenger(" + entity_predicate(predicate_object['passenger']) + ")"
+
+            # Targeted entity predicate
+            if 'targeted_entity' in predicate_object:
+
+                result += ".targetedEntity(" + entity_predicate(predicate_object['targeted_entity']) + ")"
+
+            # Effects predicate
+            if 'effects' in predicate_object:
+
+                effects = predicate_object['effects']
+
+                for effect_name, effect_data in effects.items():
+
+                    result += ".addEffect(registries.getWrapperOrThrow(RegistryKeys.STATUS_EFFECT).getOrThrow(" \
+                              "RegistryKey.of(RegistryKeys.STATUS_EFFECT, Identifier.of(\"" + effect_name + "\"))), " \
+                              "new EntityEffectPredicate.EffectData("
+
+                    result += int_range_or_any(effect_data, 'amplifier') + ", " + \
+                              int_range_or_any(effect_data, 'duration') + ", "
+
+                    if 'ambient' in effect_data:
+
+                        result += ("true" if effect_data['ambient'] else "false") + ", "
+
+                    else:
+
+                        result += "Optional.empty(), "
+
+                    if 'visible' in effect_data:
+
+                        result += ("true" if effect_data['visible'] else "false")
+
+                    else:
+
+                        result += "Optional.empty()"
+
+                    result += "))"
+
+            return result
+
+        # Get item predicate
+        def item_predicate(predicate_object):
+            """
+            Helper method, converts object to ItemPredicate
+            """
+
+            result = "ItemPredicate.Builder.create()"
+
+            if 'items' in predicate_object:
+
+                if '#' not in str(predicate_object['items']):
+
+                    if isinstance(predicate_object['items'], str):
+
+                        result += ".items(Registries.ITEM.get(Identifier.of(\"" + \
+                                  str(predicate_object['items']) + "\")))"
+
+                    else:
+
+                        result += ".items("
+
+                        for item in predicate_object['items']:
+
+                            result += "Registries.ITEM.get(Identifier.of(\"" + str(item) + "\")), "
+
+                        result = result[:-2] + ")"
+
+                else:
+
+                    result += ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
+                              str(predicate_object['items']).replace('#', '') + "\")))"
+
+            if 'count' in predicate_object:
+
+                result += ".count(" + int_range(predicate_object['count']) + ")"
+
+            # No components and predicates support
+
+            return result
+
         # Get matching LootCondition
         def loot_condition(condition_object):
+            """
+            Helper method, converts object to LootCondition
+            """
 
             condition_type = condition_object['condition']
 
@@ -300,169 +709,14 @@ def loot_table_json_to_java(path: str, event: int):
             # Match tool
             if condition_type == "minecraft:match_tool":
 
-                result = "MatchToolLootCondition.builder(ItemPredicate.Builder.create()"
-
-                predicate = condition_object['predicate']
-
-                if 'items' in predicate:
-
-                    result += ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
-                              str(predicate['items']).replace('#', '') + "\")))"
-
-                if 'count' in predicate:
-
-                    if isinstance(predicate['count'], int):
-
-                        result += ".count(NumberRange.IntRange.exactly(" + \
-                                  str(predicate['count']) + "))"
-
-                    else:
-
-                        result += ".count(NumberRange.IntRange.between(" + \
-                                  str(predicate['count']['min']) + ", " + \
-                                  str(predicate['count']['max']) + "))"
-
-                # No components and predicates support
-
-                result += ")"
+                result = "MatchToolLootCondition.builder(" + item_predicate(condition_object['predicate']) + ")"
 
                 return result
 
             # Location check
             if condition_type == "minecraft:location_check":
 
-                result = "LocationCheckLootCondition.builder(LocationPredicate.Builder.create()"
-
-                predicate = condition_object['predicate']
-
-                # Position predicate
-                if 'position' in predicate:
-
-                    if 'x' in predicate['position']:
-
-                        x = predicate['position']['x']
-
-                        if isinstance(x, Number):
-
-                            result += ".x(NumberRange.DoubleRange.exactly(" + \
-                                      str(x) + "F))"
-
-                        else:
-
-                            result += ".x(NumberRange.DoubleRange.between(" + \
-                                      str(x['min']) + "F, " + \
-                                      str(x['max']) + "F))"
-
-                    if 'y' in predicate['position']:
-
-                        y = predicate['position']['y']
-
-                        if isinstance(y, Number):
-
-                            result += ".y(NumberRange.DoubleRange.exactly(" + \
-                                      str(y) + "F))"
-
-                        else:
-
-                            result += ".y(NumberRange.DoubleRange.between(" + \
-                                      str(y['min']) + "F, " + \
-                                      str(y['max']) + "F))"
-
-                    if 'z' in predicate['position']:
-
-                        z = predicate['position']['z']
-
-                        if isinstance(z, Number):
-
-                            result += ".z(NumberRange.DoubleRange.exactly(" + \
-                                      str(z) + "F))"
-
-                        else:
-
-                            result += ".z(NumberRange.DoubleRange.between(" + \
-                                      str(z['min']) + "F, " + \
-                                      str(z['max']) + "F))"
-
-                # Biomes predicate
-                if 'biomes' in predicate:
-
-                    # No biome tags support
-
-                    result += ".biome(RegistryEntryList.of(registries.getWrapperOrThrow(" \
-                              "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(RegistryKeys.BIOME, Identifier.of(\"" + \
-                              predicate['biomes'] + "\")))))"
-
-                # Structure predicate
-                if 'structures' in predicate:
-
-                    result += ".structure(RegistryEntryList.of(registries.getWrapperOrThrow(" \
-                              "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(RegistryKeys.STRUCTURE, " \
-                              "Identifier.of(\"" + predicate['structures'] + "\")))))"
-
-                # Dimension predicate
-                if 'dimension' in predicate:
-
-                    result += ".dimension(RegistryKey.of(RegistryKeys.WORLD, Identifier.of(\"" + \
-                              predicate['dimension'] + "\")))"
-
-                # Light predicate
-                if 'light' in predicate:
-
-                    if 'light' in predicate['light']:
-
-                        result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.exactly(" + \
-                                  str(predicate['light']['light']) + ")))"
-
-                    else:
-
-                        result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.between(" + \
-                                  str(predicate['light']['min']) + ", " + \
-                                  str(predicate['light']['max']) + ")))"
-
-                # Smokey predicate
-                if 'smokey' in predicate:
-
-                    result += ".smokey(" + ("true" if predicate['smokey'] else "false") + ")"
-
-                # Can see sky predicate
-                if 'can_see_sky' in predicate:
-
-                    result += ".canSeeSky(" + ("true" if predicate['can_see_sky'] else "false") + ")"
-
-                # Block predicate
-                if 'block' in predicate:
-
-                    result += ".block(BlockPredicate.Builder.create()"
-
-                    if 'blocks' in predicate['block']:
-
-                        blocks = predicate['block']['blocks']
-
-                        if '#' not in str(blocks):
-
-                            result += ".blocks(Registries.BLOCK.get(Identifier.of(\"" + blocks + "\"))))"
-
-                        else:
-
-                            result += ".tag(TagKey.of(RegistryKeys.BLOCK, Identifier.of(\"" + \
-                                      str(blocks).replace('#', '') + "\"))))"
-
-                    # No state support
-
-                # Fluid predicate
-                if 'fluid' in predicate:
-
-                    result += ".fluid(FluidPredicate.Builder.create()"
-
-                    if 'fluids' in predicate['fluid']:
-
-                        fluids = predicate['fluid']['fluids']
-
-                        result += ".fluid(Registries.FLUID.get(Identifier.of(\"" + fluids + "\"))))"
-
-                        # No fluid tag support
-
-                    # No state support
+                result = "LocationCheckLootCondition.builder(" + location_predicate(condition_object['predicate'])
 
                 # Block offset
                 if 'offsetX' in condition_object or 'offsetY' in condition_object or 'offsetZ' in condition_object:
@@ -530,7 +784,24 @@ def loot_table_json_to_java(path: str, event: int):
             # Entity properties
             if condition_type == "minecraft:entity_properties":
 
-                return ""
+                result = "EntityPropertiesLootCondition.builder(LootContext.EntityTarget." + \
+                         str(condition_object['entity']).upper() + ", " + \
+                         entity_predicate(condition_object['predicate']) + ")"
+
+                return result
+
+            # Enchantment active check
+            if condition_type == "minecraft:enchantment_active_check":
+
+                result = "EnchantmentActiveCheckLootCondition"
+
+                if condition_object['active']:
+
+                    result += ".requireActive()"
+
+                else:
+
+                    result += ".requireInactive()"
 
         # Get matching LootFunction
         def loot_function(function_object):
