@@ -303,16 +303,44 @@ def loot_table_json_to_java(path: str, event: int):
             if 'biomes' in predicate_object:
                 # No biome tags support
 
-                result += ".biome(RegistryEntryList.of(registries.getWrapperOrThrow(" \
-                          "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(RegistryKeys.BIOME, Identifier.of(\"" + \
-                          predicate_object['biomes'] + "\")))))"
+                result += ".biome(RegistryEntryList.of("
+
+                if isinstance(predicate_object['biomes'], str):
+
+                    result += "registries.getWrapperOrThrow(RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
+                              "RegistryKeys.BIOME, Identifier.of(\"" + predicate_object['biomes'] + "\")))"
+
+                else:
+
+                    for biome in predicate_object['biomes']:
+
+                        result += "registries.getWrapperOrThrow(RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
+                                  "RegistryKeys.BIOME, Identifier.of(\"" + biome + "\"))), "
+
+                    result = result[:-2]
+
+                result += "))"
 
             # Structure predicate
             if 'structures' in predicate_object:
 
-                result += ".structure(RegistryEntryList.of(registries.getWrapperOrThrow(" \
-                          "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(RegistryKeys.STRUCTURE, " \
-                          "Identifier.of(\"" + predicate_object['structures'] + "\")))))"
+                result += ".structure(RegistryEntryList.of("
+
+                if isinstance(predicate_object['structures'], str):
+
+                    result += "registries.getWrapperOrThrow(RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
+                              "RegistryKeys.STRUCTURE, Identifier.of(\"" + predicate_object['biomes'] + "\")))"
+
+                else:
+
+                    for structure in predicate_object['structures']:
+
+                        result += "registries.getWrapperOrThrow(RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
+                                  "RegistryKeys.STRUCTURE, Identifier.of(\"" + structure + "\"))), "
+
+                    result = result[:-2]
+
+                result += "))"
 
             # Dimension predicate
             if 'dimension' in predicate_object:
@@ -624,6 +652,35 @@ def loot_table_json_to_java(path: str, event: int):
 
             return result
 
+        # Get damage source predicate
+        def damage_source_predicate(predicate_object):
+            """
+            Helper method, converts object to DamageSourcePredicate
+            """
+
+            result = "DamageSourcePredicate.Builder.create()"
+
+            if 'tags' in predicate_object:
+
+                for tag in predicate_object['tags']:
+
+                    result += ".tag(TagPredicate." + ("expected" if tag['expected'] else "unexpected") + \
+                              "(TagKey.of(RegistryKeys.DAMAGE_TYPE, Identifier.of(\"" + tag['id'] + "\"))))"
+
+            if 'source_entity' in predicate_object:
+
+                result += ".sourceEntity(" + entity_predicate(predicate_object['source_entity']) + ")"
+
+            if 'direct_entity' in predicate_object:
+
+                result += ".directEntity(" + entity_predicate(predicate_object['direct_entity']) + ")"
+
+            if 'is_direct' in predicate_object:
+
+                result += ".isDirect(" + ("true" if predicate_object['is_direct'] else "false") + ")"
+
+            return result
+
         # Get matching LootCondition
         def loot_condition(condition_object):
             """
@@ -802,6 +859,39 @@ def loot_table_json_to_java(path: str, event: int):
                 else:
 
                     result += ".requireInactive()"
+
+                return result
+
+            # Damage source properties
+            if condition_type == "minecraft:damage_source_properties":
+
+                return "DamageSourcePropertiesLootCondition.builder(" + \
+                       damage_source_predicate(condition_object['predicate']) + ")"
+
+            # Any of
+            if condition_type == "minecraft:any_of":
+
+                result = "AnyOfLootCondition.builder("
+
+                for term in condition_object['terms']:
+
+                    result += loot_condition(term)
+
+                result = result[:-2] + ")"
+
+                return result
+
+            # All of
+            if condition_type == "minecraft:all_of":
+
+                result = "AllOfLootCondition.builder("
+
+                for term in condition_object['terms']:
+                    result += loot_condition(term)
+
+                result = result[:-2] + ")"
+
+                return result
 
         # Get matching LootFunction
         def loot_function(function_object):
