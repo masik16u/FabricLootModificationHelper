@@ -135,6 +135,18 @@
               }
             }
           }
+        },
+        {
+          "condition": "minecraft:damage_source_properties",
+          "predicate": {
+            "tags": [
+              {
+                "id": "minecraft:always_triggers_silverfish",
+                "expected": true
+              }
+            ],
+            "is_direct": true
+          }
         }
       ]
     }

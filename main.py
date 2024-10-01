@@ -277,7 +277,7 @@ def loot_table_json_to_java(path: str, event: int):
                 return "NumberRange.IntRange.ANY"
 
         # Get location predicate
-        def location_predicate(predicate_object):
+        def location_predicate(predicate_object, number_of_tabs):
             """
             Helper method, converts object to LocationPredicate
             """
@@ -289,32 +289,37 @@ def loot_table_json_to_java(path: str, event: int):
 
                 if 'x' in predicate_object['position']:
 
-                    result += ".x(" + double_range(predicate_object['position']['x']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 1) + ".x(" + \
+                              double_range(predicate_object['position']['x']) + ")"
 
                 if 'y' in predicate_object['position']:
 
-                    result += ".y(" + double_range(predicate_object['position']['y']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 1) + ".y(" + \
+                              double_range(predicate_object['position']['y']) + ")"
 
                 if 'z' in predicate_object['position']:
 
-                    result += ".z(" + double_range(predicate_object['position']['z']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 1) + ".z(" + \
+                              double_range(predicate_object['position']['z']) + ")"
 
             # Biomes predicate
             if 'biomes' in predicate_object:
                 # No biome tags support
 
-                result += ".biome(RegistryEntryList.of("
+                result += "\n" + tabs(number_of_tabs + 1) + ".biome(RegistryEntryList.of("
 
                 if isinstance(predicate_object['biomes'], str):
 
-                    result += "registries.getWrapperOrThrow(RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
+                    result += "\n" + tabs(number_of_tabs + 2) + "registries.getWrapperOrThrow(" \
+                              "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
                               "RegistryKeys.BIOME, Identifier.of(\"" + predicate_object['biomes'] + "\")))"
 
                 else:
 
                     for biome in predicate_object['biomes']:
 
-                        result += "registries.getWrapperOrThrow(RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
+                        result += "\n" + tabs(number_of_tabs + 2) + "registries.getWrapperOrThrow(" \
+                                  "RegistryKeys.BIOME).getOrThrow(RegistryKey.of(" \
                                   "RegistryKeys.BIOME, Identifier.of(\"" + biome + "\"))), "
 
                     result = result[:-2]
@@ -324,18 +329,20 @@ def loot_table_json_to_java(path: str, event: int):
             # Structure predicate
             if 'structures' in predicate_object:
 
-                result += ".structure(RegistryEntryList.of("
+                result += "\n" + tabs(number_of_tabs + 1) + ".structure(RegistryEntryList.of("
 
                 if isinstance(predicate_object['structures'], str):
 
-                    result += "registries.getWrapperOrThrow(RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
+                    result += "\n" + tabs(number_of_tabs + 2) + "registries.getWrapperOrThrow(" \
+                              "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
                               "RegistryKeys.STRUCTURE, Identifier.of(\"" + predicate_object['biomes'] + "\")))"
 
                 else:
 
                     for structure in predicate_object['structures']:
 
-                        result += "registries.getWrapperOrThrow(RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
+                        result += "\n" + tabs(number_of_tabs + 2) + "registries.getWrapperOrThrow(" \
+                                  "RegistryKeys.STRUCTURE).getOrThrow(RegistryKey.of(" \
                                   "RegistryKeys.STRUCTURE, Identifier.of(\"" + structure + "\"))), "
 
                     result = result[:-2]
@@ -345,35 +352,39 @@ def loot_table_json_to_java(path: str, event: int):
             # Dimension predicate
             if 'dimension' in predicate_object:
 
-                result += ".dimension(RegistryKey.of(RegistryKeys.WORLD, Identifier.of(\"" + \
-                          predicate_object['dimension'] + "\")))"
+                result += "\n" + tabs(number_of_tabs + 1) + ".dimension(RegistryKey.of(" \
+                          "RegistryKeys.WORLD, Identifier.of(\"" + predicate_object['dimension'] + "\")))"
 
             # Light predicate
             if 'light' in predicate_object:
 
                 if 'light' in predicate_object['light']:
 
-                    result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.exactly(" + \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".light(LightPredicate.Builder.create().light(" \
+                              "NumberRange.IntRange.exactly(" + \
                               str(predicate_object['light']['light']) + ")))"
 
                 else:
 
-                    result += ".light(LightPredicate.Builder.create().light(NumberRange.IntRange.between(" + \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".light(LightPredicate.Builder.create().light(" \
+                              "NumberRange.IntRange.between(" + \
                               str(predicate_object['light']['min']) + ", " + \
                               str(predicate_object['light']['max']) + ")))"
 
             # Smokey predicate
             if 'smokey' in predicate_object:
-                result += ".smokey(" + ("true" if predicate_object['smokey'] else "false") + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".smokey(" + \
+                          ("true" if predicate_object['smokey'] else "false") + ")"
 
             # Can see sky predicate
             if 'can_see_sky' in predicate_object:
-                result += ".canSeeSky(" + ("true" if predicate_object['can_see_sky'] else "false") + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".canSeeSky(" + \
+                          ("true" if predicate_object['can_see_sky'] else "false") + ")"
 
             # Block predicate
             if 'block' in predicate_object:
 
-                result += ".block(BlockPredicate.Builder.create()"
+                result += "\n" + tabs(number_of_tabs + 1) + ".block(BlockPredicate.Builder.create()"
 
                 if 'blocks' in predicate_object['block']:
 
@@ -381,11 +392,13 @@ def loot_table_json_to_java(path: str, event: int):
 
                     if '#' not in str(blocks):
 
-                        result += ".blocks(Registries.BLOCK.get(Identifier.of(\"" + blocks + "\"))))"
+                        result += "\n" + tabs(number_of_tabs + 2) + ".blocks(Registries.BLOCK.get(Identifier.of(\"" + \
+                                  blocks + "\"))))"
 
                     else:
 
-                        result += ".tag(TagKey.of(RegistryKeys.BLOCK, Identifier.of(\"" + \
+                        result += "\n" + tabs(number_of_tabs + 2) + ".tag(TagKey.of(" \
+                                  "RegistryKeys.BLOCK, Identifier.of(\"" + \
                                   str(blocks).replace('#', '') + "\"))))"
 
                 # No state support
@@ -393,7 +406,7 @@ def loot_table_json_to_java(path: str, event: int):
             # Fluid predicate
             if 'fluid' in predicate_object:
 
-                result += ".fluid(FluidPredicate.Builder.create()"
+                result += "\n" + tabs(number_of_tabs + 1) + ".fluid(FluidPredicate.Builder.create()"
 
                 if 'fluids' in predicate_object['fluid']:
 
@@ -401,11 +414,13 @@ def loot_table_json_to_java(path: str, event: int):
 
                     if '#' not in str(fluids):
 
-                        result += ".fluid(Registries.FLUID.get(Identifier.of(\"" + fluids + "\"))))"
+                        result += "\n" + tabs(number_of_tabs + 2) + ".fluid(Registries.FLUID.get(" \
+                                  "Identifier.of(\"" + fluids + "\"))))"
 
                     else:
 
-                        result += ".tag(Registries.FLUID.getOrCreateEntryList(TagKey.of(RegistryKeys.FLUID, " \
+                        result += "\n" + tabs(number_of_tabs + 2) + ".tag(Registries.FLUID.getOrCreateEntryList(" \
+                                  "TagKey.of(RegistryKeys.FLUID, " \
                                   "Identifier.of(\"" + str(fluids).replace('#', '') + "\")))) "
 
                 # No state support
@@ -413,7 +428,7 @@ def loot_table_json_to_java(path: str, event: int):
             return result
 
         # Get entity predicate
-        def entity_predicate(predicate_object):
+        def entity_predicate(predicate_object, number_of_tabs):
             """
             Helper method, converts object to EntityPredicate
             """
@@ -425,12 +440,14 @@ def loot_table_json_to_java(path: str, event: int):
 
                 if '#' not in str(predicate_object['type']):
 
-                    result += ".type(EntityTypePredicate.create(Registries.ENTITY_TYPE.get(Identifier.of(\"" + \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".type(EntityTypePredicate.create("\
+                              "Registries.ENTITY_TYPE.get(Identifier.of(\"" + \
                               predicate_object['type'] + "\"))))"
 
                 else:
 
-                    result += ".type(EntityTypePredicate.create(TagKey.of(RegistryKeys.ENTITY_TYPE, " \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".type(EntityTypePredicate.create(TagKey.of(" \
+                              "RegistryKeys.ENTITY_TYPE, " \
                               "Identifier.of(\"" + str(predicate_object['type']).replace('#', '') + "\")))) "
 
             # No support for type specific
@@ -440,19 +457,20 @@ def loot_table_json_to_java(path: str, event: int):
             # Team predicate
             if 'team' in predicate_object:
 
-                result += ".team(\"" + predicate_object['team'] + "\")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".team(\"" + predicate_object['team'] + "\")"
 
             # Location predicate
             if 'location' in predicate_object:
 
-                result += ".location(" + location_predicate(predicate_object['location']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".location(" + \
+                          location_predicate(predicate_object['location'], number_of_tabs + 1) + ")"
 
             # Movement predicate
             if 'movement' in predicate_object:
 
                 movement = predicate_object['movement']
 
-                result += ".movement(new MovementPredicate("
+                result += "\n" + tabs(number_of_tabs + 1) + ".movement(new MovementPredicate("
 
                 result += double_range_or_any(movement, 'x') + ", " + \
                           double_range_or_any(movement, 'y') + ", " + \
@@ -465,18 +483,20 @@ def loot_table_json_to_java(path: str, event: int):
             # Movement affected by predicate
             if 'movement_affected_by' in predicate_object:
 
-                result += ".movementAffectedBy(" + location_predicate(predicate_object['movement_affected_by']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".movementAffectedBy(" + \
+                          location_predicate(predicate_object['movement_affected_by'], number_of_tabs + 1) + ")"
 
             # Stepping on predicate
             if 'stepping_on' in predicate_object:
 
-                result += ".steppingOn(" + location_predicate(predicate_object['stepping_on']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".steppingOn(" + \
+                          location_predicate(predicate_object['stepping_on'], number_of_tabs + 1) + ")"
 
             # Distance predicate
             if 'distance' in predicate_object:
                 distance = predicate_object['distance']
 
-                result += ".distance(new DistancePredicate("
+                result += "\n" + tabs(number_of_tabs + 1) + ".distance(new DistancePredicate("
 
                 result += double_range_or_any(distance, 'x') + ", " + \
                           double_range_or_any(distance, 'y') + ", " + \
@@ -487,114 +507,135 @@ def loot_table_json_to_java(path: str, event: int):
             # Flags predicate
             if 'flags' in predicate_object:
 
-                result += ".flags(EntityFlagsPredicate.Builder.create()"
+                result += "\n" + tabs(number_of_tabs + 1) + ".flags(EntityFlagsPredicate.Builder.create()"
 
                 flags = predicate_object['flags']
 
                 if 'is_on_ground' in flags:
 
-                    result += ".onGround(" + ("true" if flags['is_on_ground'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".onGround(" + \
+                              ("true" if flags['is_on_ground'] else "false") + ")"
 
                 if 'is_on_fire' in flags:
 
-                    result += ".onFire(" + ("true" if flags['is_on_fire'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".onFire(" + \
+                              ("true" if flags['is_on_fire'] else "false") + ")"
 
                 if 'is_sneaking' in flags:
 
-                    result += ".sneaking(" + ("true" if flags['is_sneaking'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".sneaking(" + \
+                              ("true" if flags['is_sneaking'] else "false") + ")"
 
                 if 'is_sprinting' in flags:
 
-                    result += ".sprinting(" + ("true" if flags['is_sprinting'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".sprinting(" + \
+                              ("true" if flags['is_sprinting'] else "false") + ")"
 
                 if 'is_swimming' in flags:
 
-                    result += ".swimming(" + ("true" if flags['is_swimming'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".swimming(" + \
+                              ("true" if flags['is_swimming'] else "false") + ")"
 
                 if 'is_flying' in flags:
 
-                    result += ".flying(" + ("true" if flags['is_flying'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".flying(" + \
+                              ("true" if flags['is_flying'] else "false") + ")"
 
                 if 'is_baby' in flags:
 
-                    result += ".isBaby(" + ("true" if flags['is_baby'] else "false") + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".isBaby(" + \
+                              ("true" if flags['is_baby'] else "false") + ")"
 
                 result += ")"
 
             # Equipment predicate
             if 'equipment' in predicate_object:
 
-                result += ".equipment(EntityEquipmentPredicate.Builder.create()"
+                result += "\n" + tabs(number_of_tabs + 1) + ".equipment(EntityEquipmentPredicate.Builder.create()"
 
                 equipment = predicate_object['equipment']
 
                 if 'mainhand' in equipment:
 
-                    result += ".mainhand(" + item_predicate(equipment['mainhand']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".mainhand(" + \
+                              item_predicate(equipment['mainhand'], number_of_tabs + 2) + ")"
 
                 if 'offhand' in equipment:
 
-                    result += ".offhand(" + item_predicate(equipment['offhand']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".offhand(" + \
+                              item_predicate(equipment['offhand'], number_of_tabs + 2) + ")"
 
                 if 'head' in equipment:
 
-                    result += ".head(" + item_predicate(equipment['head']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".head(" + \
+                              item_predicate(equipment['head'], number_of_tabs + 2) + ")"
 
                 if 'chest' in equipment:
 
-                    result += ".chest(" + item_predicate(equipment['chest']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".chest(" + \
+                              item_predicate(equipment['chest'], number_of_tabs + 2) + ")"
 
                 if 'legs' in equipment:
 
-                    result += ".legs(" + item_predicate(equipment['legs']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".legs(" + \
+                              item_predicate(equipment['legs'], number_of_tabs + 2) + ")"
 
                 if 'feet' in equipment:
 
-                    result += ".feet(" + item_predicate(equipment['feet']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".feet(" + \
+                              item_predicate(equipment['feet'], number_of_tabs + 2) + ")"
 
                 if 'body' in equipment:
 
-                    result += ".body(" + item_predicate(equipment['body']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".body(" + \
+                              item_predicate(equipment['body'], number_of_tabs + 2) + ")"
 
                 result += ")"
 
             # Periodic tick predicate
             if 'periodic_tick' in predicate_object:
 
-                result += ".periodicTick(" + str(predicate_object['periodic_tick']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".periodicTick(" + \
+                          str(predicate_object['periodic_tick']) + ")"
 
             # Vehicle predicate
             if 'vehicle' in predicate_object:
 
-                result += ".vehicle(" + entity_predicate(predicate_object['vehicle']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".vehicle(" + \
+                          entity_predicate(predicate_object['vehicle'], number_of_tabs + 1) + ")"
 
             # Passenger predicate
             if 'passenger' in predicate_object:
 
-                result += ".passenger(" + entity_predicate(predicate_object['passenger']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".passenger(" + \
+                          entity_predicate(predicate_object['passenger'], number_of_tabs + 1) + ")"
 
             # Targeted entity predicate
             if 'targeted_entity' in predicate_object:
 
-                result += ".targetedEntity(" + entity_predicate(predicate_object['targeted_entity']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".targetedEntity(" + \
+                          entity_predicate(predicate_object['targeted_entity'], number_of_tabs + 1) + ")"
 
             # Effects predicate
             if 'effects' in predicate_object:
 
                 effects = predicate_object['effects']
 
+                result += "\n" + tabs(number_of_tabs + 1) + ".effects(EntityEffectPredicate.Builder.create()"
+
                 for effect_name, effect_data in effects.items():
 
-                    result += ".addEffect(registries.getWrapperOrThrow(RegistryKeys.STATUS_EFFECT).getOrThrow(" \
+                    result += "\n" + tabs(number_of_tabs + 2) + ".addEffect(registries.getWrapperOrThrow(" \
+                              "RegistryKeys.STATUS_EFFECT).getOrThrow(" \
                               "RegistryKey.of(RegistryKeys.STATUS_EFFECT, Identifier.of(\"" + effect_name + "\"))), " \
-                              "new EntityEffectPredicate.EffectData("
+                              "\n" + tabs(number_of_tabs + 3) + "new EntityEffectPredicate.EffectData("
 
                     result += int_range_or_any(effect_data, 'amplifier') + ", " + \
                               int_range_or_any(effect_data, 'duration') + ", "
 
                     if 'ambient' in effect_data:
 
-                        result += ("true" if effect_data['ambient'] else "false") + ", "
+                        result += ("Optional.of(true)" if effect_data['ambient'] else "Optional.of(false)") + ", "
 
                     else:
 
@@ -602,7 +643,7 @@ def loot_table_json_to_java(path: str, event: int):
 
                     if 'visible' in effect_data:
 
-                        result += ("true" if effect_data['visible'] else "false")
+                        result += ("Optional.of(true)" if effect_data['visible'] else "Optional.of(false)")
 
                     else:
 
@@ -610,10 +651,12 @@ def loot_table_json_to_java(path: str, event: int):
 
                     result += "))"
 
+                result += ")"
+
             return result
 
         # Get item predicate
-        def item_predicate(predicate_object):
+        def item_predicate(predicate_object, number_of_tabs):
             """
             Helper method, converts object to ItemPredicate
             """
@@ -626,34 +669,35 @@ def loot_table_json_to_java(path: str, event: int):
 
                     if isinstance(predicate_object['items'], str):
 
-                        result += ".items(Registries.ITEM.get(Identifier.of(\"" + \
+                        result += "\n" + tabs(number_of_tabs + 1) + ".items(Registries.ITEM.get(Identifier.of(\"" + \
                                   str(predicate_object['items']) + "\")))"
 
                     else:
 
-                        result += ".items("
+                        result += "\n" + tabs(number_of_tabs + 1) + ".items("
 
                         for item in predicate_object['items']:
 
-                            result += "Registries.ITEM.get(Identifier.of(\"" + str(item) + "\")), "
+                            result += "\n" + tabs(number_of_tabs + 2) + "Registries.ITEM.get(Identifier.of(\"" + \
+                                      str(item) + "\")), "
 
                         result = result[:-2] + ")"
 
                 else:
 
-                    result += ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".tag(TagKey.of(RegistryKeys.ITEM, Identifier.of(\"" + \
                               str(predicate_object['items']).replace('#', '') + "\")))"
 
             if 'count' in predicate_object:
 
-                result += ".count(" + int_range(predicate_object['count']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".count(" + int_range(predicate_object['count']) + ")"
 
             # No components and predicates support
 
             return result
 
         # Get damage source predicate
-        def damage_source_predicate(predicate_object):
+        def damage_source_predicate(predicate_object, number_of_tabs):
             """
             Helper method, converts object to DamageSourcePredicate
             """
@@ -664,25 +708,34 @@ def loot_table_json_to_java(path: str, event: int):
 
                 for tag in predicate_object['tags']:
 
-                    result += ".tag(TagPredicate." + ("expected" if tag['expected'] else "unexpected") + \
+                    result += "\n" + tabs(number_of_tabs + 1) + ".tag(TagPredicate." + \
+                              ("expected" if tag['expected'] else "unexpected") + \
                               "(TagKey.of(RegistryKeys.DAMAGE_TYPE, Identifier.of(\"" + tag['id'] + "\"))))"
 
             if 'source_entity' in predicate_object:
 
-                result += ".sourceEntity(" + entity_predicate(predicate_object['source_entity']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".sourceEntity(" + \
+                          entity_predicate(predicate_object['source_entity'], number_of_tabs + 1) + ")"
 
             if 'direct_entity' in predicate_object:
 
-                result += ".directEntity(" + entity_predicate(predicate_object['direct_entity']) + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".directEntity(" + \
+                          entity_predicate(predicate_object['direct_entity'], number_of_tabs + 1) + ")"
 
             if 'is_direct' in predicate_object:
 
-                result += ".isDirect(" + ("true" if predicate_object['is_direct'] else "false") + ")"
+                result += "\n" + tabs(number_of_tabs + 1) + ".isDirect(" + \
+                          ("true" if predicate_object['is_direct'] else "false") + ")"
 
             return result
 
+        # Tabs
+        def tabs(number_of_tabs):
+
+            return "\t" * number_of_tabs
+
         # Get matching LootCondition
-        def loot_condition(condition_object):
+        def loot_condition(condition_object, number_of_tabs):
             """
             Helper method, converts object to LootCondition
             """
@@ -707,25 +760,27 @@ def loot_table_json_to_java(path: str, event: int):
             # Value check
             if condition_type == "minecraft:value_check":
 
-                return "ValueCheckLootCondition.builder(" + loot_number(condition_object['value']) + \
-                    ", " + bounded_int_unary_operator(condition_object['range']) + ")"
+                return "ValueCheckLootCondition.builder(" + "\n" + tabs(number_of_tabs + 1) + \
+                       loot_number(condition_object['value']) + ", " + "\n" + tabs(number_of_tabs + 1) + \
+                       bounded_int_unary_operator(condition_object['range']) + ")"
 
             # Time check
             if condition_type == "minecraft:time_check":
 
-                result = "TimeCheckLootCondition.create(" + \
+                result = "TimeCheckLootCondition.create(\n" + tabs(number_of_tabs + 1) + \
                          bounded_int_unary_operator(condition_object['value']) + ")"
 
                 if 'period' in condition_object:
 
-                    result += ".period(" + str(condition_object['period']) + ")"
+                    result += "\n" + tabs(number_of_tabs + 2) + ".period(" + str(condition_object['period']) + ")"
 
                 return result
 
             # Table bonus
             if condition_type == "minecraft:table_bonus":
 
-                result = "TableBonusLootCondition.builder(registries.getWrapperOrThrow(" \
+                result = "TableBonusLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                         "registries.getWrapperOrThrow(" \
                          "RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(RegistryKeys.ENCHANTMENT, " \
                          "Identifier.of(\"" + condition_object['enchantment'] + "\"))"
 
@@ -752,9 +807,10 @@ def loot_table_json_to_java(path: str, event: int):
             if condition_type == "minecraft:random_chance_with_enchanted_bonus":
 
                 return "new RandomChanceWithEnchantedBonusLootCondition(" + \
-                       str(condition_object['unenchanted_chance']) + "F, " + \
+                       "\n" + tabs(number_of_tabs + 1) + str(condition_object['unenchanted_chance']) + "F, " + \
                        str(enchantment_level_value(condition_object['enchanted_chance'])) + ", " \
-                       "registries.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(" \
+                       "\n" + tabs(number_of_tabs + 1) + "registries.getWrapperOrThrow(" \
+                       "RegistryKeys.ENCHANTMENT).getOrThrow(RegistryKey.of(" \
                        "RegistryKeys.ENCHANTMENT, Identifier.of(\"" + condition_object['enchantment'] + "\"))))"
 
             # Random chance
@@ -766,19 +822,21 @@ def loot_table_json_to_java(path: str, event: int):
             # Match tool
             if condition_type == "minecraft:match_tool":
 
-                result = "MatchToolLootCondition.builder(" + item_predicate(condition_object['predicate']) + ")"
+                result = "MatchToolLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                         item_predicate(condition_object['predicate'], number_of_tabs + 1) + ")"
 
                 return result
 
             # Location check
             if condition_type == "minecraft:location_check":
 
-                result = "LocationCheckLootCondition.builder(" + location_predicate(condition_object['predicate'])
+                result = "LocationCheckLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                         location_predicate(condition_object['predicate'], number_of_tabs + 1)
 
                 # Block offset
                 if 'offsetX' in condition_object or 'offsetY' in condition_object or 'offsetZ' in condition_object:
 
-                    result += ", new BlockPos("
+                    result += "\n" + tabs(number_of_tabs + 1) + ", new BlockPos("
 
                     if 'offsetX' in condition_object:
 
@@ -824,7 +882,8 @@ def loot_table_json_to_java(path: str, event: int):
             # Inverted
             if condition_type == "minecraft:inverted":
 
-                return "InvertedLootCondition.builder(" + loot_condition(condition_object['term']) + ")"
+                return "InvertedLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                       loot_condition(condition_object['term'], number_of_tabs + 1) + ")"
 
             # Entity scores
             # if condition_type == "minecraft:entity_scores":
@@ -841,9 +900,10 @@ def loot_table_json_to_java(path: str, event: int):
             # Entity properties
             if condition_type == "minecraft:entity_properties":
 
-                result = "EntityPropertiesLootCondition.builder(LootContext.EntityTarget." + \
-                         str(condition_object['entity']).upper() + ", " + \
-                         entity_predicate(condition_object['predicate']) + ")"
+                result = "EntityPropertiesLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                         "LootContext.EntityTarget." + str(condition_object['entity']).upper() + ", \n" + \
+                         tabs(number_of_tabs + 1) + \
+                         entity_predicate(condition_object['predicate'], number_of_tabs + 1) + ")"
 
                 return result
 
@@ -865,8 +925,8 @@ def loot_table_json_to_java(path: str, event: int):
             # Damage source properties
             if condition_type == "minecraft:damage_source_properties":
 
-                return "DamageSourcePropertiesLootCondition.builder(" + \
-                       damage_source_predicate(condition_object['predicate']) + ")"
+                return "DamageSourcePropertiesLootCondition.builder(\n" + tabs(number_of_tabs + 1) + \
+                       damage_source_predicate(condition_object['predicate'], number_of_tabs + 1) + ")"
 
             # Any of
             if condition_type == "minecraft:any_of":
@@ -875,7 +935,7 @@ def loot_table_json_to_java(path: str, event: int):
 
                 for term in condition_object['terms']:
 
-                    result += loot_condition(term)
+                    result += "\n" + tabs(number_of_tabs + 1) + loot_condition(term, number_of_tabs + 1) + ", "
 
                 result = result[:-2] + ")"
 
@@ -887,7 +947,8 @@ def loot_table_json_to_java(path: str, event: int):
                 result = "AllOfLootCondition.builder("
 
                 for term in condition_object['terms']:
-                    result += loot_condition(term)
+
+                    result += "\n" + tabs(number_of_tabs + 1) + loot_condition(term, number_of_tabs + 1) + ", "
 
                 result = result[:-2] + ")"
 
@@ -897,6 +958,8 @@ def loot_table_json_to_java(path: str, event: int):
         def loot_function(function_object):
 
             print()
+
+            return ""
 
         # --- Start building ---
         print("\tLootPool.Builder lootPool = LootPool.builder()")
@@ -924,9 +987,16 @@ def loot_table_json_to_java(path: str, event: int):
 
             for condition in conditions:
 
-                print("\t\t.conditionally(" + loot_condition(condition) + ")")
+                print("\t\t.conditionally(" + loot_condition(condition, 2) + ")")
 
         # POOL Functions
+        if 'functions' in pool:
+
+            functions = pool['functions']
+
+            for function in functions:
+
+                print("\t\t.apply(" + loot_function(function) + ")")
 
         # --- End building for MODIFY event ---
         if event == 0:

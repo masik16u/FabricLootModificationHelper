@@ -41,7 +41,7 @@ The goal of this project is to help Fabric modders convert loot tables from JSON
 ### Complete basics and make program usable
 
 - [x] Add support to most of the LootNumberProviders
-- [ ] Add support to most of the LootConditions
+- [x] Add support to most of the LootConditions
 - [ ] Add support to most of the LootFunctions
 - [ ] Add support to most of the LootPoolEntries
 
